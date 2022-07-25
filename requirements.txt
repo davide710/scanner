@@ -1,0 +1,3 @@
+opencv
+numpy
+fpdf
