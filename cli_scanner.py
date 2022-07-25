@@ -67,6 +67,7 @@ def get_contours(image):
         print('ERROR!')
         print('No document detected!')
         sys.exit()
+        
 pts1 = np.float32(get_contours(img_canny))
 pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
 matrix = cv2.getPerspectiveTransform(pts1, pts2)
@@ -77,7 +78,6 @@ output_img = perspective_img[10:foglio_y-10, 10:foglio_x-10]
 dir = os.path.join(os.getcwd(), 'scanned')
 if not os.path.exists(dir):
     os.mkdir(dir)
-
 
 cv2.imwrite('scanned/image_scanned.jpg', output_img)
 
