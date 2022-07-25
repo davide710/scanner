@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 from fpdf import FPDF 
 
-img = cv2.imread('risorse/pagella2.jpeg')
+filepath = input('Path to file: ')
+
+img = cv2.imread(filepath)
 vertici = []
 
 #print(img.shape)
