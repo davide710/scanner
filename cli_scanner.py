@@ -5,33 +5,8 @@ import cv2
 import numpy as np
 from fpdf import FPDF 
 
-####################### controlli
-if len(sys.argv) ==  2:
-    filepath = sys.argv[1]
-    if filepath.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
-        print('ERROR')
-        print('Unsupported format! Supported formats: .jpg, .jpeg, .png')
-        sys.exit()
-    if not os.path.exists(filepath):
-        print('ERROR')
-        print('File not found! Insert a valid path.')
-        sys.exit()
-else:
-    print('ERROR')
-    print('Usage: python3 cli_scanner path/to/image')
-    sys.exit()
-##############
-
-img = cv2.imread(filepath)
-vertici = []
-initial_x = img.shape[1]
-initial_y = img.shape[0]
-
 foglio_x = 100 * 4
 foglio_y = 140 * 4
-
-img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-img_canny = cv2.Canny(img_gray, 50, 50)
 
 def reorder(points):
     lista = [[x[0][0], x[0][1]] for x in points]
@@ -67,29 +42,78 @@ def get_contours(image):
         print('ERROR!')
         print('No document detected!')
         sys.exit()
-        
-pts1 = np.float32(get_contours(img_canny))
-pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
-matrix = cv2.getPerspectiveTransform(pts1, pts2)
-perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
 
-output_img = perspective_img[10:foglio_y-10, 10:foglio_x-10]
+def scan_image(filepath):
+    img = cv2.imread(filepath)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_canny = cv2.Canny(img_gray, 50, 50)
 
-dir = os.path.join(os.getcwd(), 'scanned')
-if not os.path.exists(dir):
-    os.mkdir(dir)
+    pts1 = np.float32(get_contours(img_canny))
+    pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
 
-cv2.imwrite('scanned/image_scanned.jpg', output_img)
+    return perspective_img[10:foglio_y-10, 10:foglio_x-10]
 
-pdf = FPDF(format='A4', unit='cm')
-pdf.add_page()
-pdf.image('scanned/image_scanned.jpg', 0, 0, 21, 29.7)
+def to_pdf_and_save(output_img, filepath):
+    dir = os.path.join(os.getcwd(), 'scanned')
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
-filename = ntpath.basename(filepath).split('.')[0]
+    cv2.imwrite('scanned/image_scanned.jpg', output_img)
 
-pdf.output(f"scanned/{filename}.pdf", "F")
+    pdf = FPDF(format='A4', unit='cm')
+    pdf.add_page()
+    pdf.image('scanned/image_scanned.jpg', 0, 0, 21, 29.7)
+    filename = ntpath.basename(filepath).split('.')[0]
+    pdf.output(f"scanned/{filename}.pdf", "F")
+    os.remove('scanned/image_scanned.jpg')
+    print('Scan saved in "scanned/" folder.')
 
-os.remove('scanned/image_scanned.jpg')
+def single_file_procedure(f_path):
+    if f_path.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
+            print('Unsupported format! Supported formats: .jpg, .jpeg, .png')
+    else:
+        scan = scan_image(f_path)
+        to_pdf_and_save(scan, f_path)
 
-print('Scan saved in "scanned/" folder.')
-sys.exit()
+
+if __name__ == '__main__':
+    if len(sys.argv) ==  2:
+        file_path = sys.argv[1]
+
+        if file_path == '.':
+            files = [os.path.join(os.getcwd(), f) for f in os.listdir(os.getcwd()) if os.path.isfile(os.path.join(os.getcwd(), f))]
+            if not files:
+                print('ERROR!')
+                print('No files were found.')
+                sys.exit()
+            for file in files:
+                single_file_procedure(file)
+            sys.exit()
+
+        if not os.path.exists(file_path):
+            print('ERROR')
+            print('File not found! Insert a valid path.')
+            sys.exit()
+
+        if os.path.isdir(file_path):
+            files = [os.path.join(file_path, f) for f in os.listdir(file_path) if os.path.isfile(os.path.join(file_path, f))]
+            if not files:
+                print('ERROR!')
+                print('No files were found.')
+                sys.exit()
+            for file in files:
+                single_file_procedure(file)
+            sys.exit()
+
+        if os.path.isfile(file_path):
+            single_file_procedure(file_path)
+            sys.exit()
+
+    else:
+        print('ERROR!')
+        print('Usage 1): python3 cli_scanner path/to/image')
+        print('Usage 2): python3 cli_scanner path/to/folder')
+        print('Usage 3): python3 cli_scanner .')
+        sys.exit()
