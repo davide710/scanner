@@ -43,7 +43,7 @@ def get_contours(image):
         print('No document detected!')
         sys.exit()
 
-def scan_image(filepath):
+def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_canny = cv2.Canny(img_gray, 50, 50)
@@ -51,7 +51,11 @@ def scan_image(filepath):
     pts1 = np.float32(get_contours(img_canny))
     pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
+
+    if colorized:
+        perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y), )
+    else:
+        perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
 
     return perspective_img[10:foglio_y-10, 10:foglio_x-10]
 
@@ -70,17 +74,18 @@ def to_pdf_and_save(output_img, filepath):
     os.remove('scanned/image_scanned.jpg')
     print('Scan saved in "scanned/" folder.')
 
-def single_file_procedure(f_path):
+def single_file_procedure(f_path, colorized):
     if f_path.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
             print('Unsupported format! Supported formats: .jpg, .jpeg, .png')
     else:
-        scan = scan_image(f_path)
+        scan = scan_image(f_path, colorized)
         to_pdf_and_save(scan, f_path)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) ==  2:
+    if len(sys.argv) ==  2 or (len(sys.argv) == 3 and sys.argv[2] == '-c'):
         file_path = sys.argv[1]
+        condition = len(sys.argv) == 3
 
         if file_path == '.':
             files = [os.path.join(os.getcwd(), f) for f in os.listdir(os.getcwd()) if os.path.isfile(os.path.join(os.getcwd(), f))]
@@ -89,7 +94,7 @@ if __name__ == '__main__':
                 print('No files were found.')
                 sys.exit()
             for file in files:
-                single_file_procedure(file)
+                single_file_procedure(file, condition)
             sys.exit()
 
         if not os.path.exists(file_path):
@@ -104,16 +109,16 @@ if __name__ == '__main__':
                 print('No files were found.')
                 sys.exit()
             for file in files:
-                single_file_procedure(file)
+                single_file_procedure(file, condition)
             sys.exit()
 
         if os.path.isfile(file_path):
-            single_file_procedure(file_path)
+            single_file_procedure(file_path, condition)
             sys.exit()
 
     else:
         print('ERROR!')
-        print('Usage 1): python3 cli_scanner path/to/image')
-        print('Usage 2): python3 cli_scanner path/to/folder')
-        print('Usage 3): python3 cli_scanner .')
+        print('Usage 1): python3 cli_scanner path/to/image [-c (colorized)]')
+        print('Usage 2): python3 cli_scanner path/to/folder [-c (colorized)]')
+        print('Usage 3): python3 cli_scanner . [-c (colorized)]')
         sys.exit()
