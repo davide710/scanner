@@ -27,7 +27,8 @@ def reorder(points):
         return [a, b, c, d]
     else:
         print('Usa una foto in orizzontale.')
-        sys.exit()
+        #sys.exit()
+        return False
 
 def get_contours(image):
     contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -41,22 +42,24 @@ def get_contours(image):
     else:
         print('ERROR!')
         print('No document detected!')
-        sys.exit()
+        #sys.exit()
+        return False
 
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img_canny = cv2.Canny(img_gray, 50, 50)
 
+    if not get_contours(img_canny):
+        return False
+
     pts1 = np.float32(get_contours(img_canny))
     pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-
     if colorized:
         perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y), )
     else:
         perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
-
     return perspective_img[10:foglio_y-10, 10:foglio_x-10]
 
 def to_pdf_and_save(output_img, filepath):
@@ -73,13 +76,16 @@ def to_pdf_and_save(output_img, filepath):
     pdf.output(f"scanned/{filename}.pdf", "F")
     os.remove('scanned/image_scanned.jpg')
     print('Scan saved in "scanned/" folder.')
+    print()
 
 def single_file_procedure(f_path, colorized):
     if f_path.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
             print('Unsupported format! Supported formats: .jpg, .jpeg, .png')
     else:
         scan = scan_image(f_path, colorized)
-        to_pdf_and_save(scan, f_path)
+        print(f_path)
+        if not isinstance(scan, bool):
+            to_pdf_and_save(scan, f_path)
 
 
 if __name__ == '__main__':
