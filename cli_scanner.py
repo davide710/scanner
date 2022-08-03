@@ -48,6 +48,7 @@ def get_contours(image):
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 1)
     img_canny = cv2.Canny(img_gray, 50, 50)
 
     if not get_contours(img_canny):
