@@ -37,20 +37,28 @@ def get_contours(image):
     biggest = contorni[-1]
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
+    #cv2.drawContours(img, biggest, -1, (255,0,0), 3)
+    #cv2.imshow('', cv2.resize(img, (foglio_x * 2, foglio_y * 2)))
+    #cv2.waitKey(15000)
     if len(approx) == 4:
         return reorder(approx)  #vertici_ordinati
     else:
         print('ERROR!')
         print('No document detected!')
-        #sys.exit()
+        #print(approx)
+        #print(len(approx))
+        #cv2.imshow('yjf', image)
+        
+	    #sys.exit()
         return False
 
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(img_gray, (5, 5), 1)
-    img_canny = cv2.Canny(img_blur, 50, 50)
-
+    img_blur = cv2.GaussianBlur(img_gray, (7, 7), 1)
+    ret3,img_canny = cv2.threshold(img_blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    #img_canny = cv2.Canny(img_blur, 50, 50)
+    #cv2.imshow('canny', cv2.resize(th3, (foglio_x * 2, foglio_y * 2)))
     if not get_contours(img_canny):
         return False
 
