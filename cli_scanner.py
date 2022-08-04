@@ -3,10 +3,11 @@ import os
 import ntpath
 import cv2
 import numpy as np
-from fpdf import FPDF 
+from fpdf import FPDF
 
-foglio_x = 100 * 4
-foglio_y = 140 * 4
+foglio_x = 2480
+foglio_y = 3508
+
 
 def reorder(points):
     lista = [[x[0][0], x[0][1]] for x in points]
@@ -27,7 +28,6 @@ def reorder(points):
         return [a, b, c, d]
     else:
         print('Usa una foto in orizzontale.')
-        #sys.exit()
         return False
 
 def get_contours(image):
@@ -37,39 +37,27 @@ def get_contours(image):
     biggest = contorni[-1]
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
-    #cv2.drawContours(img, biggest, -1, (255,0,0), 3)
-    #cv2.imshow('', cv2.resize(img, (foglio_x * 2, foglio_y * 2)))
-    #cv2.waitKey(15000)
     if len(approx) == 4:
-        return reorder(approx)  #vertici_ordinati
+        return reorder(approx)  #vertici ordinati
     else:
         print('ERROR!')
         print('No document detected!')
-        #print(approx)
-        #print(len(approx))
-        #cv2.imshow('yjf', image)
-        
-	    #sys.exit()
         return False
 
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_blur = cv2.GaussianBlur(img_gray, (7, 7), 1)
-    ret3,img_canny = cv2.threshold(img_blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    #img_canny = cv2.Canny(img_blur, 50, 50)
-    #cv2.imshow('canny', cv2.resize(th3, (foglio_x * 2, foglio_y * 2)))
-    if not get_contours(img_canny):
+    ret3, img_th = cv2.threshold(img_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    if not get_contours(img_th):
         return False
-
-    pts1 = np.float32(get_contours(img_canny))
+    pts1 = np.float32(get_contours(img_th))
     pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     if colorized:
-        perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y), )
+        perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y),)
     else:
-        perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y), )
-    return perspective_img[10:foglio_y-10, 10:foglio_x-10]
+        perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y),)
+    return perspective_img[40:foglio_y-40, 40:foglio_x-40]
 
 def to_pdf_and_save(output_img, filepath):
     dir = os.path.join(os.getcwd(), 'scanned')
@@ -133,7 +121,7 @@ if __name__ == '__main__':
 
     else:
         print('ERROR!')
-        print('Usage 1): python3 cli_scanner path/to/image [-c (colorized)]')
-        print('Usage 2): python3 cli_scanner path/to/folder [-c (colorized)]')
-        print('Usage 3): python3 cli_scanner . [-c (colorized)]')
+        print('Usage 1): python3 cli_scanner.py path/to/image [-c (colorized)]')
+        print('Usage 2): python3 cli_scanner.py path/to/folder [-c (colorized)]')
+        print('Usage 3): python3 cli_scanner.py . [-c (colorized)]')
         sys.exit()
