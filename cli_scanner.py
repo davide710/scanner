@@ -56,7 +56,7 @@ def scan_image(filepath, colorized):
     if colorized:
         perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y),)
     else:
-        perspective_img = cv2.warpPerspective(img_gray, matrix, (foglio_x, foglio_y),)
+        perspective_img = cv2.warpPerspective(img_th, matrix, (foglio_x, foglio_y),)
     return perspective_img[40:foglio_y-40, 40:foglio_x-40]
 
 def to_pdf_and_save(output_img, filepath):
