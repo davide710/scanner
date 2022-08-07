@@ -44,7 +44,7 @@ def get_contours(image):
         print('No document detected!')
         return False
 
-def get_threshold(image):
+def get_threshold(image, colorized):
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     for t in range(200, 120, -1):
         image_th = cv2.threshold(image_gray, t, 255, cv2.THRESH_BINARY)[1]
@@ -52,7 +52,8 @@ def get_threshold(image):
         whites = np.sum(rect == 255)
         blacks = np.sum(rect == 0)
         if whites != 0:
-            if blacks / whites < 0.01:
+            if blacks / whites < 0.001:
+                t = t if colorized else t - 10
                 break
     return t
 
@@ -71,7 +72,7 @@ def scan_image(filepath, colorized):
     img_res_color = cv2.warpPerspective(img, matrix, (a4_x, a4_y))
     img_res_gray = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2GRAY)
     img_res_hsv = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2HSV)
-    threshold = get_threshold(img_res_color)
+    threshold = get_threshold(img_res_color, colorized)
 
     if colorized:
         mask = cv2.inRange(img_res_hsv, np.array([0, 0, threshold]), np.array([179, 255, 255]))
