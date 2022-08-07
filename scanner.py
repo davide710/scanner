@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 from fpdf import FPDF
 
-foglio_x = 2480
-foglio_y = 3508
+a4_x = 2480
+a4_y = 3508
 
 
 def reorder(points):
@@ -38,26 +38,49 @@ def get_contours(image):
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
     if len(approx) == 4:
-        return reorder(approx)  #vertici ordinati
+        return reorder(approx)  #vertici_ordinati
     else:
         print('ERROR!')
         print('No document detected!')
         return False
 
+def get_threshold(image):
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    for t in range(200, 120, -1):
+        image_th = cv2.threshold(image_gray, t, 255, cv2.THRESH_BINARY)[1]
+        rect = image_th[a4_y-75:a4_y-42, 72:a4_x-72]
+        whites = np.sum(rect == 255)
+        blacks = np.sum(rect == 0)
+        if whites != 0:
+            if blacks / whites < 0.01:
+                break
+    return t
+
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    ret3, img_th = cv2.threshold(img_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    if not get_contours(img_th):
+    th = cv2.threshold(img_gray,100,255,cv2.THRESH_OTSU+cv2.THRESH_BINARY)[1]
+
+    if not get_contours(th):
         return False
-    pts1 = np.float32(get_contours(img_th))
-    pts2 = np.float32([[0, 0], [foglio_x, 0], [0, foglio_y], [foglio_x, foglio_y]])
+
+    pts1 = np.float32(get_contours(th))
+    pts2 = np.float32([[0, 0], [a4_x, 0], [0, a4_y], [a4_x, a4_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
+
+    img_res_color = cv2.warpPerspective(img, matrix, (a4_x, a4_y))
+    img_res_gray = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2GRAY)
+    img_res_hsv = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2HSV)
+    threshold = get_threshold(img_res_color)
+
     if colorized:
-        perspective_img = cv2.warpPerspective(img, matrix, (foglio_x, foglio_y),)
+        mask = cv2.inRange(img_res_hsv, np.array([0, 0, threshold]), np.array([179, 255, 255]))
+        res = cv2.bitwise_not(img_res_color, img_res_color, mask)
+        res[mask == 255] = (255, 255, 255)
     else:
-        perspective_img = cv2.warpPerspective(img_th, matrix, (foglio_x, foglio_y),)
-    return perspective_img[40:foglio_y-40, 40:foglio_x-40]
+        res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
+        
+    return res[40:a4_y-40, 40:a4_x-40]
 
 def to_pdf_and_save(output_img, filepath):
     dir = os.path.join(os.getcwd(), 'scanned')
@@ -121,7 +144,7 @@ if __name__ == '__main__':
 
     else:
         print('ERROR!')
-        print('Usage 1): python3 cli_scanner.py path/to/image [-c (colorized)]')
-        print('Usage 2): python3 cli_scanner.py path/to/folder [-c (colorized)]')
-        print('Usage 3): python3 cli_scanner.py . [-c (colorized)]')
+        print('Usage 1): python3 scanner.py path/to/image [-c (colorized)]')
+        print('Usage 2): python3 scanner.py path/to/folder [-c (colorized)]')
+        print('Usage 3): python3 scanner.py . [-c (colorized)]')
         sys.exit()
