@@ -15,7 +15,7 @@ def reorder(points):
     ys = [x[0][1] for  x in points]
     b = (max(xs) + min(xs)) // 2
     h = (max(ys) + min(ys)) // 2
-    if h > b: # è in verticale
+    if h > b: # it's vertical
         lista.sort(key=lambda x: x[1])
         a_e_b = lista[:2]
         a_e_b.sort(key=lambda x: x[0])
@@ -27,7 +27,7 @@ def reorder(points):
         d = c_e_d[1]
         return [a, b, c, d]
     else:
-        print('Usa una foto in orizzontale.')
+        print('Use an horizontal picture.')
         return False
 
 def get_contours(image):
@@ -38,7 +38,7 @@ def get_contours(image):
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
     if len(approx) == 4:
-        return reorder(approx)  #vertici_ordinati
+        return reorder(approx)
     else:
         print('ERROR!')
         print('No document detected!')
@@ -75,9 +75,13 @@ def scan_image(filepath, colorized):
     threshold = get_threshold(img_res_color, colorized)
 
     if colorized:
-        mask = cv2.inRange(img_res_hsv, np.array([0, 0, threshold]), np.array([179, 255, 255]))
-        res = cv2.bitwise_not(img_res_color, img_res_color, mask)
-        res[mask == 255] = (255, 255, 255)
+        #mask = cv2.inRange(img_res_hsv, np.array([0, 0, threshold]), np.array([179, 255, 255]))
+        #res = cv2.bitwise_not(img_res_color, img_res_color, mask)
+        #res[mask == 255] = (255, 255, 255)
+        mask = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
+        img_res_color[mask == 255] = (255, 255, 255)
+        res = img_res_color
+
     else:
         res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
         
