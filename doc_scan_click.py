@@ -4,7 +4,7 @@ import numpy as np
 from fpdf import FPDF 
 import os
 
-filepath = 'test_images/ex_doc.jpg'#input('Path to file: ')
+filepath = 'examples/prova2.jpeg'#input('Path to file: ')
 colorized = True
 
 img = cv2.imread(filepath)

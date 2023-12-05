@@ -5,38 +5,44 @@ import cv2
 import numpy as np
 from fpdf import FPDF
 
+
+# size of A4 sheet in pixel:
 a4_x = 2480
 a4_y = 3508
 
 
-def reorder(points):
+def reorder(points): #cv2.findContours detects corners in random order, but to apply perspective you need them ordered
     lista = [[x[0][0], x[0][1]] for x in points]
-    xs = [x[0][0] for  x in points]
-    ys = [x[0][1] for  x in points]
-    b = (max(xs) + min(xs)) // 2
-    h = (max(ys) + min(ys)) // 2
-    if h > b: # it's vertical
-        lista.sort(key=lambda x: x[1])
-        a_e_b = lista[:2]
-        a_e_b.sort(key=lambda x: x[0])
-        a = a_e_b[0]
-        b = a_e_b[1]
-        c_e_d = lista[2:]
-        c_e_d.sort(key=lambda x: x[0])
-        c = c_e_d[0]
-        d = c_e_d[1]
-        return [a, b, c, d]
-    else:
-        print('Use an horizontal picture.')
-        return False
+    #xs = [x[0][0] for  x in points]
+    #ys = [x[0][1] for  x in points]
+    #b = (max(xs) + min(xs)) // 2
+    #h = (max(ys) + min(ys)) // 2
+    lista.sort(key=lambda x: x[1])
+    a_and_b = lista[:2]
+    a_and_b.sort(key=lambda x: x[0])
+    a = a_and_b[0]
+    b = a_and_b[1]
+    c_and_d = lista[2:]
+    c_and_d.sort(key=lambda x: x[0])
+    c = c_and_d[0]
+    d = c_and_d[1]
+    return [a, b, c, d]
 
-def get_contours(image):
+def get_contours(img_gray):  # core function: detect the 4 corners of the document
+
+    image = cv2.dilate(cv2.Canny(img_gray, 50, 50), None, 1)
+
+    #image = cv2.threshold(img_gray, 130, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)[1]
+
     contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    contorni = list(contours)
-    contorni.sort(key=lambda x: cv2.contourArea(x))
-    biggest = contorni[-1]
+    contours = list(contours)
+    contours.sort(key=lambda x: cv2.contourArea(x))
+
+    biggest = contours[-1]  # if everything worked, the biggest contour should be the document
+
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
+
     if len(approx) == 4:
         return reorder(approx)
     else:
@@ -46,13 +52,15 @@ def get_contours(image):
 
 def get_threshold(image, colorized):
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    for t in range(200, 120, -1):
+    for t in range(200, 120, -1):  #try every threshold from 200 to 120 and check when enough pixels in rect are white 
         image_th = cv2.threshold(image_gray, t, 255, cv2.THRESH_BINARY)[1]
-        rect = image_th[a4_y-75:a4_y-42, 72:a4_x-72]
+        rect = image_th[a4_y-75:a4_y-42, 72:a4_x-72] # this region is often supposed to be white so it is a decent place to check 
         whites = np.sum(rect == 255)
         blacks = np.sum(rect == 0)
         if whites != 0:
-            if blacks / whites < 0.001:
+            if blacks / whites < 0.001: # when applying cv2.threshold with a high value, many supposed to be white pixels become black.
+                                        # on the other hand, if the value is low it's likely that text or content will become white.
+                                        # that's why I think starting at 200 and going down is the best choice
                 t = t if colorized else t - 10
                 break
     return t
@@ -60,18 +68,19 @@ def get_threshold(image, colorized):
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    th = cv2.threshold(img_gray,100,255,cv2.THRESH_OTSU+cv2.THRESH_BINARY)[1]
 
-    if not get_contours(th):
+
+    if not get_contours(img_gray):  # i.e. if no document is detected
         return False
 
-    pts1 = np.float32(get_contours(th))
+    pts1 = np.float32(get_contours(img_gray))
     pts2 = np.float32([[0, 0], [a4_x, 0], [0, a4_y], [a4_x, a4_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
 
     img_res_color = cv2.warpPerspective(img, matrix, (a4_x, a4_y))
     img_res_gray = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2GRAY)
     img_res_hsv = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2HSV)
+
     threshold = get_threshold(img_res_color, colorized)
 
     if colorized:
