@@ -40,4 +40,5 @@ The same code is behind https://onlinescanner.pythonanywhere.com/
 
 ### WANT TO HELP MAKING THIS BETTER?
 If you want to improve this, if you have an idea to make it better, or if you are having trouble using or setting this up, please raise an issue.
+Otherwise, work on one of the improvements I mentioned in the Issues section
 You can also star the repository.
