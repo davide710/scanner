@@ -10,6 +10,14 @@ from fpdf import FPDF
 a4_x = 2480
 a4_y = 3508
 
+def _resize(img): #for debug purposes
+    width = 400
+    scale_factor = width / img.shape[1]
+    height = int(img.shape[0] * scale_factor)
+    dimension = (width, height)
+    im = cv2.resize(img, dimension, interpolation = cv2.INTER_AREA)
+    return im
+
 
 def reorder(points): #cv2.findContours detects corners in random order, but to apply perspective you need them ordered
     lista = [[x[0][0], x[0][1]] for x in points]
