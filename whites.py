@@ -1,8 +1,12 @@
+"""
+script that tries to detect the pixels of an image that "should be white", i.e. the document.
+This is necessary because there's often much variance in brightness within the picture
+"""
 import cv2
 import numpy as np
 import pandas as pd
 
-imlist = ['ex_doc.jpg', 'prova1.jpeg', 'prova2.jpeg', 'prova3.jpeg', 'prova4.jpeg', 'prova5.jpeg']
+imlist = ['ex_doc.jpg', 'prova2.jpeg', 'prova3.jpeg', 'prova4.jpeg', 'prova5.jpeg']
 
 for path in imlist:
     im = cv2.imread(f'examples/test_images/{path}')

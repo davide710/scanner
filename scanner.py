@@ -36,6 +36,23 @@ def reorder(points): #cv2.findContours detects corners in random order, but to a
     d = c_and_d[1]
     return [a, b, c, d]
 
+def white(image):
+    im = np.array(image)
+
+    im_reshaped = np.reshape(im, (-1, 3))
+    dict = {'B': im_reshaped[:, 0], 'G': im_reshaped[:, 1], 'R': im_reshaped[:, 2]}
+
+    means = np.mean(im_reshaped, axis=1)
+    stdevs = np.std(im_reshaped, axis=1)
+
+    dict['B'] = np.where(((stdevs < 10) & (means > 100)), 255, dict['B'])
+    dict['G'] = np.where(((stdevs < 10) & (means > 100)), 255, dict['G'])
+    dict['R'] = np.where(((stdevs < 10) & (means > 100)), 255, dict['R'])
+
+    new = np.vstack((dict['B'], dict['G'], dict['R'])).T
+    new = np.reshape(new, (im.shape[0], im.shape[1], 3))
+    return new
+
 def get_contours(img_gray):  # core function: detect the 4 corners of the document
 
     image = cv2.dilate(cv2.Canny(img_gray, 50, 50), None, 1)
@@ -57,7 +74,7 @@ def get_contours(img_gray):  # core function: detect the 4 corners of the docume
         print('ERROR!')
         print('No document detected!')
         return False
-
+    
 def get_threshold(image, colorized):
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     for t in range(200, 120, -1):  #try every threshold from 200 to 120 and check when enough pixels in rect are white 
@@ -75,7 +92,8 @@ def get_threshold(image, colorized):
 
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    whited = white(img)
+    img_gray = cv2.cvtColor(whited, cv2.COLOR_BGR2GRAY)
 
 
     if not get_contours(img_gray):  # i.e. if no document is detected
