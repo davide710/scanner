@@ -36,7 +36,9 @@ def reorder(points): #cv2.findContours detects corners in random order, but to a
     d = c_and_d[1]
     return [a, b, c, d]
 
-def white(image):
+def white(image): # function that detects pixel that are supposed to be white
+                  # i.e. pixels that have their B, G, and R values close enough
+                  # and are bright enough
     im = np.array(image)
 
     im_reshaped = np.reshape(im, (-1, 3))
