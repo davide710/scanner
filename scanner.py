@@ -119,8 +119,8 @@ def scan_image(filepath, colorized):
         img_res_color[mask == 255] = (255, 255, 255)
         res = img_res_color
 
-    else:
-        res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
+    else: #TODO: find a way to mix good aspects of adaptiveThreshold and of my custom method
+        res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1] #cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
         
     return res[40:a4_y-40, 40:a4_x-40]
 
