@@ -120,7 +120,9 @@ def scan_image(filepath, colorized):
         res = img_res_color
 
     else: #TODO: find a way to mix good aspects of adaptiveThreshold and of my custom method
-        res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1] #cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+        res_1 = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1] #cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+        res_2 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
+        res = cv2.bitwise_or(res_1, res_2)
         
     return res[40:a4_y-40, 40:a4_x-40]
 
