@@ -112,14 +112,12 @@ def scan_image(filepath, colorized):
     threshold = get_threshold(img_res_color, colorized)
 
     if colorized:
-        #mask = cv2.inRange(img_res_hsv, np.array([0, 0, threshold]), np.array([179, 255, 255]))
-        #res = cv2.bitwise_not(img_res_color, img_res_color, mask)
-        #res[mask == 255] = (255, 255, 255)
         mask = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
+        mask = cv2.bitwise_or(mask, cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2))
         img_res_color[mask == 255] = (255, 255, 255)
         res = img_res_color
 
-    else: #TODO: find a way to mix good aspects of adaptiveThreshold and of my custom method
+    else:
         res_1 = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1] #cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
         res_2 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)
         res = cv2.bitwise_or(res_1, res_2)
