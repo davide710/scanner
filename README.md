@@ -1,18 +1,21 @@
 # DOCUMENT SCANNER
 
-### Easy document scanner with python and OpenCV
-
-Transform a photo of an A4 document to a pdf. 
+### Your pocket scanner: effortless A4 document capture and transformation into a clean PDF
 
 ### WHAT'S NEW
 
-###### There's plenty of similar projects, what is it that makes this repository different (and hopefully better) ?
+###### There's plenty of similar projects, what is it that makes this repository different (and better) ?
 
 - it's purpose is to do _one_ thing, and to do it right
 - lightweight (no heavy models), fast and super-easy to use
 - the code detects pixels that are supposed to be white and makes them _white_, so that if you need to print the document you don't have to waste ink
 - automatically scan all the images in a directory
 - choose if you want the result to be colorized or black and white
+
+![prova2](https://github.com/davide710/scanner/assets/106482229/19b6b4f5-96dd-4008-84d5-a2bb81693491)
+
+![Screenshot from 2024-03-22 19-40-22](https://github.com/davide710/scanner/assets/106482229/d017f0bf-7800-4a43-ac22-322aa37a727a)
+
 
 
 ### USAGE
@@ -39,6 +42,7 @@ The same code is behind https://onlinescanner.pythonanywhere.com/
 
 
 ### WANT TO HELP MAKING THIS BETTER?
+I keep uploading many results, trying to show both examples of successful and failed tests and highlight pros and cons of the different ideas I get.
 If you want to improve this, if you have an idea to make it better, or if you are having trouble using or setting this up, please raise an issue.
-Otherwise, work on one of the improvements I mentioned in the Issues section
+Otherwise, work on one of the improvements I mentioned in the Issues section.
 You can also star the repository.
