@@ -19,7 +19,7 @@ def debug_threshold(img) -> int:
         _, thresholded_img = cv2.threshold(gray_img, threshold_value, 255, cv2.THRESH_BINARY)
         cv2.imshow('Thresholded Image', _resize(thresholded_img))
 
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if img.ndim == 3 else img
 
     # Create a window to display the image
     cv2.namedWindow('Thresholded Image')
