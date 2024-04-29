@@ -4,24 +4,11 @@ from ntpath import basename
 import cv2
 import numpy as np
 from fpdf import FPDF
-
+from debug import _resize, show_img, debug_threshold
 
 # size of A4 sheet in pixel:
 a4_x = 2480
 a4_y = 3508
-
-def _resize(img): #for debug purposes
-    width = 400
-    scale_factor = width / img.shape[1]
-    height = int(img.shape[0] * scale_factor)
-    dimension = (width, height)
-    im = cv2.resize(img, dimension, interpolation = cv2.INTER_AREA)
-    return im
-
-def show_img(img):
-    cv2.imshow("title", _resize(img))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 def reorder(points): #cv2.findContours detects corners in random order, but to apply perspective you need them ordered
     lista = [[x[0][0], x[0][1]] for x in points]
@@ -90,6 +77,8 @@ def get_threshold(image, colorized):
     on the other hand, if the value is low it's likely that text or content will become white.
     that's why I think starting at 200 and going down is the best choice
     '''
+    # value = debug_threshold(image)
+    # return value
     image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     for t in range(200, 120, -1):  #try every threshold from 200 to 120 and check when enough pixels in rect are white
         image_th = cv2.threshold(image_gray, t, 255, cv2.THRESH_BINARY)[1]
