@@ -1,7 +1,7 @@
 import ntpath
 import cv2
 import numpy as np
-from fpdf import FPDF 
+from fpdf import FPDF
 import os
 
 filepath = 'examples/prova2.jpeg'#input('Path to file: ')
@@ -52,7 +52,7 @@ def click(event, x, y, flags, params):
 
 while True:
     cv2.imshow('image', img_resize)
-    
+
     cv2.setMouseCallback('image', click)
 
     if cv2.waitKey(1) & len(vertici) == 4:
@@ -96,7 +96,7 @@ def scan_image(filepath, colorized):
 
     else:
         res = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
-        
+
     return res[40:foglio_y-40, 40:foglio_x-40]
 
 
