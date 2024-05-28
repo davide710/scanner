@@ -46,3 +46,11 @@ def show_img(img):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def show_contours(image, biggest):
+    """
+    Gets the image to create a white background of the image size and the countour selected by the get_contours function (biggest).
+    Shows the calculated outline of the document.
+    """
+    height, width = image.shape
+    blank_image = np.ones((height, width), np.uint8) * 255
+    show_img(cv2.drawContours(blank_image, biggest, -1, (0, 0, 0), 3))

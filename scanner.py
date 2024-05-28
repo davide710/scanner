@@ -4,7 +4,7 @@ from ntpath import basename
 import cv2
 import numpy as np
 from fpdf import FPDF
-from debug import _resize, show_img, debug_threshold
+from debug import _resize, show_img, debug_threshold, show_contours
 
 # size of A4 sheet in pixel:
 a4_x = 2480
@@ -50,25 +50,29 @@ def white(image):
     return new
 
 def get_contours(img_gray):  # core function: detect the 4 corners of the document
-
+    # use adaptive threshold before processing img
+    img_gray = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
     image = cv2.dilate(cv2.Canny(img_gray, 50, 50), None, 1)
-
     #image = cv2.threshold(img_gray, 130, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)[1]
 
-    contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = list(contours)
     contours.sort(key=lambda x: cv2.contourArea(x))
 
     biggest = contours[-1]  # if everything worked, the biggest contour should be the document
 
+    # Debug function call
+    # show_contours(image, biggest)
+
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
-
+    print(len(approx))
     if len(approx) == 4:
         return reorder(approx)
     else:
         print('ERROR!')
         print('No document detected!')
+        print('Make shure the edges are easy to see (high contrast, no overlapping,...)')
         return False
 
 def scan_image(filepath, colorized):
@@ -76,10 +80,10 @@ def scan_image(filepath, colorized):
     whited = white(img)
     img_gray = cv2.cvtColor(whited, cv2.COLOR_BGR2GRAY)
 
-    if not get_contours(img_gray):  # i.e. if no document is detected
+    if not (contours:=get_contours(img_gray)):  # i.e. if no document is detected
         return False
 
-    pts1 = np.float32(get_contours(img_gray))
+    pts1 = np.float32(contours)
     pts2 = np.float32([[0, 0], [a4_x, 0], [0, a4_y], [a4_x, a4_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
 
@@ -88,7 +92,10 @@ def scan_image(filepath, colorized):
     img_res_hsv = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2HSV)
 
     res_1 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
+    # run the image to filters to remove the noise
     res_2 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
+    res_2 = cv2.erode(res_2, None, 1)
+    res_2 = cv2.dilate(res_2, None, 1)
     res = cv2.bitwise_or(res_1, res_2)
 
     if not colorized: return res[40:a4_y-40, 40:a4_x-40]
