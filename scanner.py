@@ -2,6 +2,7 @@ from sys import argv, exit
 import os
 from ntpath import basename
 import cv2
+from math import dist
 import numpy as np
 from fpdf import FPDF
 from debug import _resize, show_img, debug_threshold, show_contours
@@ -12,20 +13,24 @@ a4_y = 3508
 
 def reorder(points): #cv2.findContours detects corners in random order, but to apply perspective you need them ordered
     lista = [[x[0][0], x[0][1]] for x in points]
-    #xs = [x[0][0] for  x in points]
-    #ys = [x[0][1] for  x in points]
-    #b = (max(xs) + min(xs)) // 2
-    #h = (max(ys) + min(ys)) // 2
     lista.sort(key=lambda x: x[1])
     a_and_b = lista[:2]
     a_and_b.sort(key=lambda x: x[0])
-    a = a_and_b[0]
-    b = a_and_b[1]
+    a, b = a_and_b
     c_and_d = lista[2:]
     c_and_d.sort(key=lambda x: x[0])
-    c = c_and_d[0]
-    d = c_and_d[1]
-    return [a, b, c, d]
+    c, d = c_and_d
+    distance_1 = dist(a, b)
+    distance_2 = dist(a, c)
+
+    # it's vertical
+    if distance_1<=distance_2:
+        return [a, b,
+                c, d]
+    # it's horizontal
+    else:
+        return [c, a,
+                d, b]
 
 def white(image):
     '''
