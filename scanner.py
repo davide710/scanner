@@ -75,6 +75,26 @@ def get_contours(img_gray):  # core function: detect the 4 corners of the docume
     else:
         return False
 
+def get_threshold(image, colorized):
+    '''
+    when applying cv2.threshold with a high value, many supposed to be white pixels become black.
+    on the other hand, if the value is low it's likely that text or content will become white.
+    that's why I think starting at 200 and going down is the best choice
+    '''
+    # value = debug_threshold(image)
+    # return value
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    for t in range(200, 120, -1):  #try every threshold from 200 to 120 and check when enough pixels in rect are white
+        image_th = cv2.threshold(image_gray, t, 255, cv2.THRESH_BINARY)[1]
+        rect = image_th[a4_y-75:a4_y-42, 72:a4_x-72] # this region is often supposed to be white so it is a decent place to check
+        whites = np.sum(rect == 255)
+        blacks = np.sum(rect == 0)
+        if whites == 0: continue
+        if blacks / whites < 0.001:
+            t = t if colorized else t - 10
+            break
+    return t
+
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
