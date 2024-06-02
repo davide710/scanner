@@ -2,9 +2,10 @@ from sys import argv, exit
 import os
 from ntpath import basename
 import cv2
+from math import dist
 import numpy as np
 from fpdf import FPDF
-from debug import _resize, show_img, debug_threshold
+from debug import _resize, show_img, debug_threshold, show_contours
 
 # size of A4 sheet in pixel:
 a4_x = 2480
@@ -12,20 +13,24 @@ a4_y = 3508
 
 def reorder(points): #cv2.findContours detects corners in random order, but to apply perspective you need them ordered
     lista = [[x[0][0], x[0][1]] for x in points]
-    #xs = [x[0][0] for  x in points]
-    #ys = [x[0][1] for  x in points]
-    #b = (max(xs) + min(xs)) // 2
-    #h = (max(ys) + min(ys)) // 2
     lista.sort(key=lambda x: x[1])
     a_and_b = lista[:2]
     a_and_b.sort(key=lambda x: x[0])
-    a = a_and_b[0]
-    b = a_and_b[1]
+    a, b = a_and_b
     c_and_d = lista[2:]
     c_and_d.sort(key=lambda x: x[0])
-    c = c_and_d[0]
-    d = c_and_d[1]
-    return [a, b, c, d]
+    c, d = c_and_d
+    distance_1 = dist(a, b)
+    distance_2 = dist(a, c)
+
+    # it's vertical
+    if distance_1<=distance_2:
+        return [a, b,
+                c, d]
+    # it's horizontal
+    else:
+        return [c, a,
+                d, b]
 
 def white(image):
     '''
@@ -50,16 +55,17 @@ def white(image):
     return new
 
 def get_contours(img_gray):  # core function: detect the 4 corners of the document
-
+    img_gray = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
     image = cv2.dilate(cv2.Canny(img_gray, 50, 50), None, 1)
 
-    #image = cv2.threshold(img_gray, 130, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)[1]
-
-    contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = list(contours)
     contours.sort(key=lambda x: cv2.contourArea(x))
 
     biggest = contours[-1]  # if everything worked, the biggest contour should be the document
+
+    # Debug function call
+    # show_contours(image, biggest)
 
     perimeter = cv2.arcLength(biggest, True)
     approx = cv2.approxPolyDP(biggest, 0.02*perimeter, True)
@@ -67,8 +73,6 @@ def get_contours(img_gray):  # core function: detect the 4 corners of the docume
     if len(approx) == 4:
         return reorder(approx)
     else:
-        print('ERROR!')
-        print('No document detected!')
         return False
 
 def get_threshold(image, colorized):
@@ -93,13 +97,19 @@ def get_threshold(image, colorized):
 
 def scan_image(filepath, colorized):
     img = cv2.imread(filepath)
-    whited = white(img)
-    img_gray = cv2.cvtColor(whited, cv2.COLOR_BGR2GRAY)
+    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    saturation = hsv_img[:, :, 1] # get only saturation channel
 
-    if not get_contours(img_gray):  # i.e. if no document is detected
+    if (contours:=get_contours(saturation)):  # i.e. if no document is detected
+        pts1 = np.float32(contours)
+    elif (contours:=get_contours(cv2.cvtColor(white(img), cv2.COLOR_BGR2GRAY))):
+        pts1 = np.float32(contours)
+    else:
+        print('ERROR!')
+        print('No document detected!')
+        print('Make shure the edges are easy to see (high contrast, no overlapping,...)')
         return False
 
-    pts1 = np.float32(get_contours(img_gray))
     pts2 = np.float32([[0, 0], [a4_x, 0], [0, a4_y], [a4_x, a4_y]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
 
@@ -107,10 +117,12 @@ def scan_image(filepath, colorized):
     img_res_gray = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2GRAY)
     img_res_hsv = cv2.cvtColor(img_res_color, cv2.COLOR_BGR2HSV)
 
-    threshold = get_threshold(img_res_color, colorized)
-
-    res_1 = cv2.threshold(img_res_gray, threshold, 255, cv2.THRESH_BINARY)[1]
-    res = cv2.bitwise_or(res_1, cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2)) # could use gaussian filter aswell
+    res_1 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
+    # run the image to filters to remove the noise
+    res_2 = cv2.adaptiveThreshold(img_res_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
+    res_2 = cv2.erode(res_2, None, 1)
+    res_2 = cv2.dilate(res_2, None, 1)
+    res = cv2.bitwise_or(res_1, res_2)
 
     if not colorized: return res[40:a4_y-40, 40:a4_x-40]
 
