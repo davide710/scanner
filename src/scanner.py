@@ -5,7 +5,7 @@ import cv2
 from math import dist
 import numpy as np
 from fpdf import FPDF
-from debug import _resize, show_img, debug_threshold, show_contours
+from src.debug import _resize, show_img, debug_threshold, show_contours
 
 # size of A4 sheet in pixel:
 a4_x = 2480
