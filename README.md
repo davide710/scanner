@@ -26,16 +26,16 @@ git clone https://github.com/davide710/scanner.git
 pip install -r requirements.txt
 ```
 ```
-python3 scanner.py path/to/image [-c (colorized)]
+python3 src/main.py path/to/image [-c (colorized)]
 ```
 ```
-python3 scanner.py path/to/folder [-c (colorized)]
+python3 src/main.py path/to/folder [-c (colorized)]
 ```
 ```
-python3 scanner.py . [-c (colorized)]
+python3 src/main.py . [-c (colorized)]
 ```
 
-If for some reason the sheet isn't detected, run the other script (replace scanner.py with doc_scan_click.py). This time the image will appear and you'll be clicking on the 4 corners of the document
+If for some reason the sheet isn't detected, run the other script (replace main.py with test_and_others/doc_scan_click.py). This time the image will appear and you'll be clicking on the 4 corners of the document
 
 
 The same code is behind https://onlinescanner.pythonanywhere.com/
