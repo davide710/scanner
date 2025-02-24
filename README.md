@@ -2,7 +2,7 @@
 
 #### Your pocket scanner: effortless A4 document capture and transformation into a clean PDF
 
-## The Mission
+## Key Features
 
 #### There's plenty of similar projects, what is it that makes this repository different (and better) ?
 
