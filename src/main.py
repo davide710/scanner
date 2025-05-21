@@ -22,7 +22,7 @@ def to_pdf_and_save(output_img, filepath):
     print('Scan saved in "scanned/" folder.\n')
 
 def single_file_procedure(f_path, colorized):
-    if f_path.split('.')[-1] not in ['jpg', 'jpeg', 'png']:
+    if f_path.split('.')[-1].lower() not in ['jpg', 'jpeg', 'png']:
             print('Unsupported format! Supported formats: .jpg, .jpeg, .png')
     else:
         scan = scan_image(f_path, colorized)
