@@ -17,7 +17,13 @@ def to_pdf_and_save(output_img, filepath):
     pdf.add_page()
     pdf.image('scanned/image_scanned.jpg', 0, 0, 21, 29.7)
     filename = basename(filepath).split('.')[0]
-    pdf.output(f"scanned/{filename}.pdf", "F")
+    output_path = f"scanned/{filename}.pdf"
+    count = 1
+
+    while os.path.exists(output_path):
+        output_path = f"scanned/{filename}_{count}.pdf"
+        count += 1
+    pdf.output(output_path, "F")
     os.remove('scanned/image_scanned.jpg')
     print('Scan saved in "scanned/" folder.\n')
 
