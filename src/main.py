@@ -22,7 +22,7 @@ def to_pdf_and_save(output_img, filepath):
 
     while os.path.exists(output_path):
         output_path = f"scanned/{filename}_{count}.pdf"
-    count += 1
+        count += 1
     pdf.output(output_path, "F")
     os.remove('scanned/image_scanned.jpg')
     print('Scan saved in "scanned/" folder.\n')
